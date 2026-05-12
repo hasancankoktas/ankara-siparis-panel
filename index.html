@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ankara Günlük Siparişler</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      background: #f4f5f7;
+      color: #1f2937;
+      padding: 18px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: #111827;
+      color: white;
+      padding: 20px;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 14px;
+      color: #d1d5db;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .summary strong {
+      font-size: 22px;
+      color: #111827;
+    }
+
+    .search {
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-width: 230px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .table-wrap {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: #f9fafb;
+      text-align: left;
+      padding: 14px;
+      font-size: 13px;
+      color: #4b5563;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    td {
+      padding: 14px;
+      font-size: 15px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .marketplace {
+      font-weight: bold;
+      color: #111827;
+      white-space: nowrap;
+    }
+
+    .address {
+      line-height: 1.45;
+      color: #374151;
+    }
+
+    .region {
+      display: inline-block;
+      background: #eef2ff;
+      color: #3730a3;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 14px;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    @media (max-width: 700px) {
+      body {
+        padding: 10px;
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tr {
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      td {
+        padding: 6px 0;
+        border-bottom: none;
+      }
+
+      td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 12px;
+        color: #6b7280;
+        margin-bottom: 3px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>Ankara Günlük Siparişler</h1>
+      <p id="todayText">Bugünkü Ankara içi sipariş listesi</p>
+    </div>
+
+    <div class="summary">
+      <div>Toplam Sipariş: <strong id="totalOrders">0</strong></div>
+      <input id="searchInput" class="search" type="text" placeholder="Ara: pazaryeri, adres, bölge..." />
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 8%;">#</th>
+            <th style="width: 18%;">Pazaryeri</th>
+            <th>Açık Adres</th>
+            <th style="width: 18%;">Bölge</th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody"></tbody>
+      </table>
+      <div id="emptyMessage" class="empty" style="display:none;">Bugün için sipariş bulunamadı.</div>
+    </div>
+
+    <div class="footer">Günlük liste HTML dosyası içinden güncellenir.</div>
+  </div>
+
+  <script>
+    /*
+      HER GÜN SADECE BURAYI DEĞİŞTİR
+      Her satır şu formatta olmalı:
+
+      Pazaryeri | Açık Adres | Bölge
+
+      Örnek:
+      Pazarama | Kızılay Mah. Atatürk Sok. No: 8/5 Çankaya Ankara | Çankaya
+    */
+
+    const rawOrders = `
+Site | Hacibayram mah cankiri cad no 59 kecioren sgm altindag ankara | Altındağ
+Hepsiburada | Tülay sokak 4/4 gökçen apartmanı TEPEBAŞI KEÇİÖREN 905546080341 | Keçiören
+Hepsiburada | Yukarıbahçelievler mahallesi,76. Sokak,8/4 BAHÇELİEVLER Çankaya 905396587286 | Çankaya
+Hepsiburada | Çiğdem Mh 1550.cd Gökkuşağı Sitesi Mor Blok Daire 25 BALGAT ÇANKAYA Ankara 90539250520 | Çankaya
+Site | Birlik mah. 428. Cad. mavi köşk apt 10/2Mavi köşk, 10/2 905362570363 | Çankaya
+Pazarama | Başpınar Mah ( 1178 Sk. Bina No:27 Kat:4 Daire:18 ) Altındağ/Ankara 05078733745 | Altındağ
+
+
+`;
+
+    function getTodayTR() {
+      const d = new Date();
+      const day = String(d.getDate()).padStart(2, "0");
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const year = d.getFullYear();
+      return `${day}.${month}.${year}`;
+    }
+
+    function normalizeText(value) {
+      return String(value || "")
+        .toLocaleLowerCase("tr-TR")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function getOrders() {
+      return rawOrders
+        .trim()
+        .split("\n")
+        .filter(line => line.trim() !== "")
+        .map(line => {
+          const parts = line.split("|").map(x => x.trim());
+          return {
+            Pazaryeri: parts[0] || "-",
+            AcikAdres: parts[1] || "-",
+            Bolge: parts[2] || "-"
+          };
+        });
+    }
+
+    function renderOrders() {
+      const searchValue = normalizeText(document.getElementById("searchInput").value);
+      const tbody = document.getElementById("ordersBody");
+      const emptyMessage = document.getElementById("emptyMessage");
+      const orders = getOrders();
+
+      const filteredOrders = orders.filter(order => {
+        const text = normalizeText(`${order.Pazaryeri} ${order.AcikAdres} ${order.Bolge}`);
+        return !searchValue || text.includes(searchValue);
+      });
+
+      document.getElementById("todayText").textContent = `${getTodayTR()} tarihli Ankara içi sipariş listesi`;
+      document.getElementById("totalOrders").textContent = orders.length;
+      tbody.innerHTML = "";
+
+      if (filteredOrders.length === 0) {
+        emptyMessage.style.display = "block";
+        return;
+      }
+
+      emptyMessage.style.display = "none";
+
+      filteredOrders.forEach((order, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td data-label="#"><strong>${index + 1}.</strong></td>
+          <td data-label="Pazaryeri" class="marketplace">${order.Pazaryeri}</td>
+          <td data-label="Açık Adres" class="address">${order.AcikAdres}</td>
+          <td data-label="Bölge"><span class="region">${order.Bolge}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.getElementById("searchInput").addEventListener("input", renderOrders);
+    renderOrders();
+  </script>
+</body>
+</html>
